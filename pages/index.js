@@ -8,7 +8,7 @@ const HomePage = () => {
 
   return (
     <div>
-      <h1>Hello Next World</h1>
+      {/* <h1>Featured Events</h1> */}
       <EventList items={featuredEvents} />
     </div>
   );
