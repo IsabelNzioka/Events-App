@@ -2,6 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import useSWR from "swr";
 
+import Head from "next/head";
+
 // import { getFilteredEvents } from "../../helpers/api-util";
 import { getFilteredEvents } from "../../helpers/api-utils";
 import EventList from "../../components/events/event-list";
@@ -35,8 +37,20 @@ function FilteredEventsPage(props) {
     }
   }, [data]);
 
+  let pageHeadData = (
+    <Head>
+      <title>Filtred Events</title>
+      <meta name="description" content={`A List of Filtered events`} />
+    </Head>
+  );
+
   if (!loadedEvents) {
-    return <p className="center">Loading...</p>;
+    return (
+      <Fragment>
+        {pageHeadData}
+        <p className="center">Loading...</p>
+      </Fragment>
+    );
   }
 
   const filteredYear = filterData[0];
@@ -44,6 +58,15 @@ function FilteredEventsPage(props) {
 
   const numYear = +filteredYear;
   const numMonth = +filteredMonth;
+  pageHeadData = (
+    <Head>
+      <title>Filtred Events</title>
+      <meta
+        name="description"
+        content={`All Events from ${numMonth}/${numYear}`}
+      />
+    </Head>
+  );
 
   if (
     isNaN(numYear) ||
