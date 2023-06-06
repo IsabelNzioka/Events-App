@@ -1,6 +1,19 @@
+import {
+  insertDocument,
+  connectDatabase,
+  getAllDocuments,
+} from "../../../helpers/db-util";
+
 //  /comments.some-event-id
-function handler(req, res) {
+async function handler(req, res) {
   const eventId = req.query.eventId;
+
+  let client;
+  try {
+    client = await connectDatabase();
+  } catch (error) {
+    res.status(500).json({ message: "Connecting to the database failed" });
+  }
 
   if (req.method === "POST") {
     // add server-side validation
@@ -14,23 +27,44 @@ function handler(req, res) {
       text.trim() === ""
     ) {
       res.status(422).json({ message: "Invalid input" });
-      return;
+      client.close();
     }
 
-    const newComment = { id: new Date().toISOString(), email, name, text };
-    console.log(newComment);
+    const newComment = { email, name, text, eventId };
 
-    res.status(201).json({ message: "Added comment", comment: newComment });
+    let result;
+    try {
+      result = await insertDocument(client, "comments", newComment);
+
+      newComment._id = result.insertedId;
+
+      res.status(201).json({ message: "Added comment", comment: newComment });
+    } catch (error) {
+      res.status(500).json({ message: "Inserting comment failed" });
+    }
+
+    // const db = client.db();
+    // const result = await db.collection("comments").insertOne(newComment);
   }
 
   if (req.method === "GET") {
-    const dummyList = [
-      { id: "c1", name: "Max", text: "A First comment" },
-      { id: "c2", name: "Max", text: "A Second comment" },
-    ];
+    // const db = client.db();
 
-    res.status(200).json({ comments: dummyList });
+    // const documents = await db
+    //   .collection("comments")
+    //   .find()
+    //   .sort({ _id: -1 }) //descending order - latest comment is the first comment
+    //   .toArray();
+
+    try {
+      const documents = await getAllDocuments(client, "comments", { _id: -1 });
+      res.status(200).json({ comments: documents });
+    } catch (error) {
+      res.status(500).json({ message: "Getting comments failed" });
+    }
   }
+
+  client.close();
 }
 
 export default handler;
